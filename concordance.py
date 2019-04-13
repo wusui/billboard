@@ -119,4 +119,4 @@ def gen_concordance(song_list):
 
 
 if __name__ == '__main__':
-    print(check_conc('Memphis'))
+    print(check_conc(''))
