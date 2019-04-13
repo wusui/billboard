@@ -10,8 +10,7 @@ import os
 import json
 import sys
 import operator
-
-START_YEAR = 1958
+from scanbillboard import START_YEAR
 
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
