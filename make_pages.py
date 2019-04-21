@@ -78,12 +78,15 @@ def main():
     with open("template.txt", 'r') as inputstr:
         template = inputstr.read()
     for word in config_data['words']:
-        table_data = fmt_table(gen_table(check_conc(word)))
-        ofilen = config_data['directory'] + os.sep + word.lower() + '.html'
-        with open(ofilen, 'w') as ofile:
-            ofile.write(template % word)
-            ofile.write(table_data)
-            ofile.write('</table></div></body></html>\n')
+        table_info = check_conc(word)
+        for enumv, hdr in enumerate(['', 'rejects_']):
+            table_data = fmt_table(gen_table(table_info[enumv]))
+            ofilen = config_data['directory'] + os.sep
+            ofilen += hdr + word.lower() + '.html'
+            with open(ofilen, 'w') as ofile:
+                ofile.write(template % word)
+                ofile.write(table_data)
+                ofile.write('\n</table></div></body></html>\n')
 
 
 if __name__ == '__main__':

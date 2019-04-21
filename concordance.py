@@ -6,6 +6,7 @@ songs.
 """
 import codecs
 from datetime import datetime
+import re
 import os
 import json
 import sys
@@ -13,6 +14,8 @@ import operator
 from scanbillboard import START_YEAR
 
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+REGEXA = re.compile('[^a-z ]')
+TRANSTAB = str.maketrans('/', ' ')
 
 
 def organize_answer(answer):
@@ -56,6 +59,31 @@ def organize_answer(answer):
     return retdict
 
 
+def find_word(word, song):
+    """
+    Input:
+       word -- word being scanned for
+       song -- song title
+
+    Return:
+       -1 if word is not in song.
+       0 if word is in song.
+       1 if word in in text of the song ('train' contains 'rain')
+    """
+    titlew = REGEXA.sub('', song.lower().translate(TRANSTAB))
+    if titlew.find(word) < 0:
+        return -1
+    if titlew == word:
+        return 0
+    if titlew.startswith(word + ' '):
+        return 0
+    if titlew.endswith(' ' + word):
+        return 0
+    if titlew.find(' ' + word + ' ') > 0:
+        return 0
+    return 1
+
+
 def check_conc(magic_word=''):
     """
     Accumlate a list of song titles from the information in the data
@@ -71,7 +99,7 @@ def check_conc(magic_word=''):
     now = datetime.now()
     year_lim = now.year + 1
     song_list = []
-    answer = []
+    answer = [[], []]
     for year in range(START_YEAR, year_lim):
         year_dir = 'data%s%d' % (os.sep, year)
         topdir = os.listdir(year_dir)
@@ -81,12 +109,12 @@ def check_conc(magic_word=''):
                 song_data = json.load(fname)
                 for count, entry in enumerate(song_data):
                     if magic_word:
-                        titlew = entry[1].lower()
-                        if titlew.find(magic_word) >= 0:
-                            answer.append([entry, week_name, count])
+                        tvalue = find_word(magic_word, entry[1])
+                        if tvalue >= 0:
+                            answer[tvalue].append([entry, week_name, count])
                     song_list.append(entry[1])
     if magic_word:
-        return organize_answer(answer)
+        return organize_answer(answer[0]), organize_answer(answer[1])
     return gen_concordance(song_list)
 
 
