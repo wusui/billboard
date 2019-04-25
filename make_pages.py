@@ -5,33 +5,16 @@ Produce html files containg song info with specific words in their titles.
 """
 import os
 import yaml
+from htmlutil import fmt_table
+from htmlutil import OutputInterface
 from concordance import check_conc
+from concordance import FIRST_DATE
+from concordance import LAST_DATE
+from concordance import WEEKS_ON
+from concordance import BEST
 
 
-def wrap(headr, data):
-    """
-    Input:
-       headr -- text of html field
-       data -- text to be wrapped.
-
-    Returns a corresponding portion of an html file.
-    """
-    return '<%s>%s</%s>' % (headr, data, headr)
-
-
-def fmt_table(tbl_info):
-    """
-    Format a table.  tbl_info is a list of lists.  Each list in tbl_info
-    is a line of fields.  Wrap the fields in td html blocks and the lines
-    in tr html blocks
-    """
-    output = []
-    for tline in tbl_info:
-        local_line = ''
-        for field in tline:
-            local_line += wrap('td', field)
-        output.append(wrap('tr', local_line))
-    return '\n'.join(output)
+WORDTABLE_HEADER = "Billboard Hot-100 Songs containing the word %s"
 
 
 def gen_table(conc_data):
@@ -53,10 +36,10 @@ def gen_table(conc_data):
                 record.append('')
             record.append(artist)
             info = conc_data[title][artist]
-            record.append(info['first-date'])
-            record.append(info['last-date'])
-            record.append(str(info['weeks-on']))
-            record.append(str(info['best']))
+            record.append(info[FIRST_DATE])
+            record.append(info[LAST_DATE])
+            record.append(str(info[WEEKS_ON]))
+            record.append(str(info[BEST]))
             out_info.append(record)
     return out_info
 
@@ -75,18 +58,18 @@ def main():
     """
     with open("page_data.yaml", 'r') as inputstr:
         config_data = yaml.safe_load(inputstr)
-    with open("template.txt", 'r') as inputstr:
-        template = inputstr.read()
+    ointf = OutputInterface('template.txt')
     for word in config_data['words']:
         table_info = check_conc(word)
         for enumv, hdr in enumerate(['', 'rejects_']):
             table_data = fmt_table(gen_table(table_info[enumv]))
             ofilen = config_data['directory'] + os.sep
             ofilen += hdr + word.lower() + '.html'
-            with open(ofilen, 'w') as ofile:
-                ofile.write(template % word)
-                ofile.write(table_data)
-                ofile.write('\n</table></div></body></html>\n')
+            title = WORDTABLE_HEADER % word
+            header = ['Song', 'Artist', 'First Date', 'Last Date',
+                      'No. of Weeks', 'Peak']
+            ointf.build_page(ofilen, title, header, table_data)
+            ointf.output()
 
 
 if __name__ == '__main__':

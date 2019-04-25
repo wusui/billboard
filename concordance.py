@@ -5,17 +5,37 @@ Concordance routines.  Search for words in titles of Billboaard Hot-100
 songs.
 """
 import codecs
-from datetime import datetime
 import re
-import os
-import json
 import sys
 import operator
-from scanbillboard import START_YEAR
+from scanner import Scanner
 
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 REGEXA = re.compile('[^a-z ]')
 TRANSTAB = str.maketrans('/', ' ')
+FIRST_DATE = 'first-date'
+LAST_DATE = 'last-date'
+WEEKS_ON = 'weeks-on'
+BEST = 'best'
+
+
+class ConcScan(Scanner):
+    """
+    Local scanner used by the concordance program.
+
+    self.paramv is the word to be scanned (magicw).
+    """
+    def __init__(self, magicw):
+        Scanner.__init__(self, magicw)
+        self.song_list = []
+        self.answer = [[], []]
+
+    def sfunc(self, entry, week_name, count):
+        if self.paramv:
+            tvalue = find_word(self.paramv, entry[1])
+            if tvalue >= 0:
+                self.answer[tvalue].append([entry, week_name, count])
+        self.song_list.append(entry[1])
 
 
 def organize_answer(answer):
@@ -46,16 +66,16 @@ def organize_answer(answer):
         localp = retdict[entry[0][1]]
         if entry[0][0] not in localp:
             newperf = {}
-            newperf['first-date'] = datev
-            newperf['last-date'] = datev
-            newperf['weeks-on'] = 1
-            newperf['best'] = rank
+            newperf[FIRST_DATE] = datev
+            newperf[LAST_DATE] = datev
+            newperf[WEEKS_ON] = 1
+            newperf[BEST] = rank
             localp[entry[0][0]] = newperf
         else:
-            localp[entry[0][0]]['last-date'] = datev
-            localp[entry[0][0]]['weeks-on'] += 1
-            if rank < localp[entry[0][0]]['best']:
-                localp[entry[0][0]]['best'] = rank
+            localp[entry[0][0]][LAST_DATE] = datev
+            localp[entry[0][0]][WEEKS_ON] += 1
+            if rank < localp[entry[0][0]][BEST]:
+                localp[entry[0][0]][BEST] = rank
     return retdict
 
 
@@ -96,26 +116,12 @@ def check_conc(magic_word=''):
     about songs with that word in the title
     """
     magic_word = magic_word.lower()
-    now = datetime.now()
-    year_lim = now.year + 1
-    song_list = []
-    answer = [[], []]
-    for year in range(START_YEAR, year_lim):
-        year_dir = 'data%s%d' % (os.sep, year)
-        topdir = os.listdir(year_dir)
-        for week in topdir:
-            week_name = '%s%s%s' % (year_dir, os.sep, week)
-            with open(week_name, encoding='utf-8') as fname:
-                song_data = json.load(fname)
-                for count, entry in enumerate(song_data):
-                    if magic_word:
-                        tvalue = find_word(magic_word, entry[1])
-                        if tvalue >= 0:
-                            answer[tvalue].append([entry, week_name, count])
-                    song_list.append(entry[1])
+    chk_conc_scan = ConcScan(magic_word)
+    chk_conc_scan.do_scan()
     if magic_word:
-        return organize_answer(answer[0]), organize_answer(answer[1])
-    return gen_concordance(song_list)
+        return (organize_answer(chk_conc_scan.answer[0]),
+                organize_answer(chk_conc_scan.answer[1]))
+    return gen_concordance(chk_conc_scan.song_list)
 
 
 def gen_concordance(song_list):
@@ -147,4 +153,6 @@ def gen_concordance(song_list):
 
 
 if __name__ == '__main__':
+    print(check_conc('breakfast'))
+    print(check_conc('chameleon'))
     print(check_conc(''))

@@ -26,3 +26,18 @@ html page of the results for each word.  Page_data.yaml is a file that
 contains the list of words and the directory where the html pages will
 be stored.
  
+## common_names.py
+
+Find the names of songs that match artists.  Currently just prints out
+the information on exact matches.
+
+## scanner.py
+
+Class used locally that loops through all the data.  sfunc and __init__
+are  implemented by classes that inherit this class in order to perform
+desired  actions.
+
+## htmlutil.py
+
+Collection of routines used for formatting html pages.
+
