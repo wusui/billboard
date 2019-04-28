@@ -3,34 +3,12 @@
 """
 Look for matches between song titles and artist names.
 """
-import codecs
-import sys
 import os
 from datetime import datetime
 import yaml
-from scanner import Scanner
 from htmlutil import OutputInterface
 from htmlutil import fmt_table
-
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-
-
-class PrintScan(Scanner):
-    """
-    self.artists is a list of artists
-    self.songs is a list of song titles
-    self.all_data is a list of all records for every week.
-    """
-    def __init__(self):
-        super(PrintScan, self).__init__(self)
-        self.artists = []
-        self.songs = []
-        self.all_data = []
-
-    def sfunc(self, entry, week_name, count):
-        self.artists.append(entry[0])
-        self.songs.append(entry[1])
-        self.all_data.append([entry[0], entry[1], week_name, count])
+from song_scan import get_song_artist
 
 
 def get_song_artist_matches():
@@ -39,15 +17,13 @@ def get_song_artist_matches():
     song titles and performers.  Return the result as a list of lists,
     each internal list representing a line.
     """
-    chk_conc_scan = PrintScan()
-    chk_conc_scan.do_scan()
-    resulta = list(set(chk_conc_scan.artists))
-    results = list(set(chk_conc_scan.songs))
+    resulta, results, all_data = get_song_artist()
     answers = {}
     for entry in resulta:
         if entry in results:
             answers[entry] = [[], []]
-            for info in chk_conc_scan.all_data:
+            # for info in chk_conc_scan.all_data:
+            for info in all_data:
                 if entry == info[0]:
                     answers[entry][0].append(info)
                 if entry == info[1]:

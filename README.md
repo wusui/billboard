@@ -28,8 +28,8 @@ be stored.
  
 ## common_names.py
 
-Find the names of songs that match artists.  Currently just prints out
-the information on exact matches.
+Find the names of songs that match artists.  Works on exact matches.
+Saves the data in an html table.  
 
 ## scanner.py
 
@@ -41,3 +41,7 @@ desired  actions.
 
 Collection of routines used for formatting html pages.
 
+## song_scan.py
+
+Object used to hold data extracted from all the json files, and the
+associated get routine. 
